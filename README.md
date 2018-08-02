@@ -1,0 +1,2 @@
+# goasm
+go webasm lib
