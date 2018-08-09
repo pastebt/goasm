@@ -27,6 +27,14 @@ func main() {
 }
 
 
+// return func will copy col_id to local, which is necessory
+func do_sort(tb_id string, col_id int) func([]js.Value) {
+    return func([]js.Value) {
+    log.Debugf("do_sort table %s, column %d", tb_id, col_id)
+    }
+}
+
+
 func SortTable(id string) {
     //println("table id is", id)
     elm := js.Global().Get("document").Call("getElementById", id)
@@ -34,8 +42,18 @@ func SortTable(id string) {
     //udf := js.Null()
     //fmt.Printf("elm=%#v, udf=%#v, %#v\n", elm, udf, elm == udf)
     if elm == js.Null() {
-        log.Errorf("Can not find table with id=%s\n", id)
+        log.Errorf("Can not find table with id=%s", id)
         return
     }
-    
+    thd := elm.Call("getElementsByTagName", "thead")
+    if thd.Length() < 1 {
+        log.Errorf("Can not find thead of table %s", id)
+        return
+    }
+    ths := thd.Index(0).Call("getElementsByTagName", "th")
+    log.Debugf("found %d th(s) in table %s", ths.Length(), id)
+    for i := 0; i < ths.Length(); i++ {
+        cb := js.NewCallback(do_sort(id, i))
+        ths.Index(i).Call("addEventListener", "click", cb)
+    }
 }
