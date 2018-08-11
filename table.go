@@ -6,6 +6,72 @@ import (
     "fgdwcfgo/log"
 )
 
+func insertFirst(elm, chd js.Value) {
+    /*
+    fc := elm.Get("firstChild")
+    if fc.Type == js.Null {
+    } else {
+        elm.Call("")
+    }
+    */
+}
+
+func initSortTable() {
+    doc := js.Global().Get("document")
+    ss := doc.Get("styleSheets")
+    log.Debugf("ss.Length = %v", ss.Length())
+    for i := 0; i < ss.Length(); i++ {
+        log.Debugf("title %v = %v", i, ss.Index(i).Get("title"))
+    }
+
+    st := doc.Call("createElement", "style")
+    st.Set("innerHTML",
+           `table.sorted th.header {
+                background-image: url(/css/images/bg.gif);
+                background-repeat: no-repeat;
+                #background-position: center right;
+                cursor: pointer;
+                background-color: red;
+                background-position: center left;
+            }
+            table.sorted th.headerUp {
+                background-image: url(/css/images/asc.gif);
+                background-color: #8dbdd8;
+            }
+            table.sorted th.headerDn {
+                background-image: url(/css/images/desc.gif);
+                background-color: #8dbdd8;
+            }
+            `)
+    hd := doc.Call("getElementsByTagName", "head")
+    if hd.Length() < 1 {
+        log.Errorf("Can not find <head> in html ")
+        return
+    }
+    hd.Index(0).Call("insertBefore", st, hd.Index(0).Get("firstChild"))
+
+    /*
+    st := doc.Call("querySelector", "table.sorted")
+    if st.Type() == js.TypeNull {
+        log.Errorf("can not find class table.sorted")
+    }
+    hd := doc.Call("querySelector", "table.sorted thead tr .header")
+    if hd.Type() == js.TypeNull {
+        log.Errorf("can not find class header")
+    }
+    up := doc.Call("querySelector", "table.sorted thead tr .headerUp")
+    if up.Type() == js.TypeNull {
+        log.Errorf("can not find class headerUp")
+    }
+    dn := doc.Call("querySelector", "table.sorted thead tr .headerDn")
+    if dn.Type() == js.TypeNull {
+        log.Errorf("can not find class headerDn")
+    } else {
+        log.Debugf("dn=%#v, dn.Type=%v", dn, dn.Type())
+    }
+    */
+}
+
 
 type Row struct {
     tr  js.Value
@@ -49,6 +115,8 @@ func (t *Table)Init() {
         log.Errorf("Can not find table with id=%s", t.id)
         return
     }
+    // contains(class)
+    t.elm.Get("classList").Call("add", "sorted")
     t.get_head()
     t.get_body()
 }

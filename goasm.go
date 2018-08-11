@@ -19,6 +19,8 @@ func main() {
     js.Global().Get("document").Call("getElementById", "myButton").Call("addEventListener", "click", cb)
 //    js.Global().Set("Sorted", "abcdefg")
 */
+    initSortTable()
+
     st := func(i []js.Value) { SortTable(i[0].String()) }
     js.Global().Set("SortTable", js.NewCallback(st))
     select {}
