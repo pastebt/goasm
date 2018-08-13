@@ -32,7 +32,8 @@ func initSortTable() {
                 background-color: #d0dddd;
             }
             table.sorted th.header {
-                background-image: url(/css/images/bg.gif);
+                #background-image: url(/css/images/bg.gif);
+                background-image: url(data:image/gif;base64,R0lGODlhFQAJAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAkAAAIXjI+AywnaYnhUMoqt3gZXPmVg94yJVQAAOw==);
                 background-repeat: no-repeat;
                 background-position: center right;
                 cursor: pointer;
@@ -40,11 +41,13 @@ func initSortTable() {
                 #background-position: center left;
             }
             table.sorted th.headerUp {
-                background-image: url(/css/images/asc.gif);
+                #background-image: url(/css/images/asc.gif);
+                background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7);
                 background-color: #8dbdd8;
             }
             table.sorted th.headerDn {
-                background-image: url(/css/images/desc.gif);
+                #background-image: url(/css/images/desc.gif);
+                background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7);
                 background-color: #8dbdd8;
             }
             table.sorted tbody tr:nth-child(even) {
