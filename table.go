@@ -96,7 +96,9 @@ func less(rows []Row, col, typ, ord int) func(i, j int) bool {
     I := rows[i].tds[col].Get("innerText")
     J := rows[j].tds[col].Get("innerText")
     // TODO, typ and ord
-    return I.String() < J.String()
+    b := I.String() < J.String()
+    if ord < 0 { return !b }
+    return b
 }
 }
 
@@ -123,9 +125,36 @@ func (t *Table)Init() {
 
 
 // return func will copy col_id to local, which is necessory
-func (t *Table)do_sort(col_id int) func([]js.Value) {
+func (t *Table)click_col(col_id int) func([]js.Value) {
     return func([]js.Value) {
-    sort.Slice(t.rows, less(t.rows, col_id, 0, 0))
+    cls := t.cols[col_id].Get("classList")
+    if cls.Call("contains", "headerUp").Bool() {
+        log.Debugf("remove headerUp, add headerDn")
+        cls.Call("remove", "headerUp")
+        cls.Call("add", "headerDn")
+    } else {
+        log.Debugf("remove headerDn, add headerUp")
+        cls.Call("remove", "headerDn")
+        cls.Call("add", "headerUp")
+    }
+    for i, col := range t.cols {
+        c := col.Get("classList")
+        c.Call("add", "header")
+        if i != col_id {
+            c.Call("remove", "headerUp", "headerDn")
+        }
+    }
+    t.do_sort(col_id)
+    }
+}
+
+
+func (t *Table)do_sort(col_id int) {
+    ord := 1
+    if t.cols[col_id].Get("classList").Call("contains", "headerUp").Bool() {
+        ord = -1
+    }
+    sort.Slice(t.rows, less(t.rows, col_id, 0, ord))
     log.Debugf("do_sort table %s, column %d", t.id, col_id)
     for _, row := range t.rows {
         for _, td := range row.tds {
@@ -134,8 +163,6 @@ func (t *Table)do_sort(col_id int) func([]js.Value) {
         }
         t.body.Call("removeChild", row.tr)
         t.body.Call("appendChild", row.tr)
-    }
-
     }
 }
 
@@ -149,7 +176,7 @@ func (t *Table)get_head() {
     ths := thd.Index(0).Call("getElementsByTagName", "th")
     log.Debugf("found %d th(s) in table %s", ths.Length(), t.id)
     for i := 0; i < ths.Length(); i++ {
-        cb := js.NewCallback(t.do_sort(i))
+        cb := js.NewCallback(t.click_col(i))
         ths.Index(i).Call("addEventListener", "click", cb)
         t.cols = append(t.cols, ths.Index(i))
     }
