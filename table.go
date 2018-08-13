@@ -2,6 +2,8 @@ package main
 
 import (
     "sort"
+    "strings"
+    "strconv"
     "syscall/js"
     "fgdwcfgo/log"
 )
@@ -26,13 +28,16 @@ func initSortTable() {
 
     st := doc.Call("createElement", "style")
     st.Set("innerHTML",
-           `table.sorted th.header {
+           `table.sorted th {
+                background-color: #d0dddd;
+            }
+            table.sorted th.header {
                 background-image: url(/css/images/bg.gif);
                 background-repeat: no-repeat;
-                #background-position: center right;
+                background-position: center right;
                 cursor: pointer;
-                background-color: red;
-                background-position: center left;
+                #background-color: #d0dddd;
+                #background-position: center left;
             }
             table.sorted th.headerUp {
                 background-image: url(/css/images/asc.gif);
@@ -41,6 +46,13 @@ func initSortTable() {
             table.sorted th.headerDn {
                 background-image: url(/css/images/desc.gif);
                 background-color: #8dbdd8;
+            }
+            table.sorted tbody tr:nth-child(even) {
+                background-color: #F0F0F6;
+            }
+            table.sorted tbody tr:hover {
+                background: #e6eeee;
+                color: red;
             }
             `)
     hd := doc.Call("getElementsByTagName", "head")
@@ -88,15 +100,39 @@ type Table struct {
 
 }
 
+var sort_type = map[string]int{"string": 0,     // default, fixed to 0
+                               "number": 1,
+                               "currency": 2}
+
+func less_num(Is, Js string) bool {
+    Ii, Ie := strconv.ParseFloat(Is, 64)
+    Ji, Je := strconv.ParseFloat(Js, 64)
+    if Ie != nil || Je != nil {
+        log.Errorf("less Is=%v, Js=%v, Ie=%v, Je=%v", Is, Js, Ie, Je)
+        return Is < Js
+    }
+    return Ii < Ji
+}
+
+
 // c: column
-// t: type
+// t: type: number, currency, string(default)
 // o: order
 func less(rows []Row, col, typ, ord int) func(i, j int) bool {
     return func(i, j int) bool {
     I := rows[i].tds[col].Get("innerText")
     J := rows[j].tds[col].Get("innerText")
     // TODO, typ and ord
-    b := I.String() < J.String()
+    b, Is, Js := false, I.String(), J.String()
+    switch typ {
+    case 1:
+        b = less_num(Is, Js)
+    case 2:
+        b = less_num(strings.Replace(Is, ",", "", -1),
+                     strings.Replace(Js, ",", "", -1))
+    default:
+        b = Is < Js
+    }
     if ord < 0 { return !b }
     return b
 }
@@ -119,8 +155,10 @@ func (t *Table)Init() {
     }
     // contains(class)
     t.elm.Get("classList").Call("add", "sorted")
-    t.get_head()
+    isc := t.get_head()
+    log.Debugf("isc=%v", isc)
     t.get_body()
+    if isc >= 0 { t.do_sort(isc) }
 }
 
 
@@ -150,12 +188,17 @@ func (t *Table)click_col(col_id int) func([]js.Value) {
 
 
 func (t *Table)do_sort(col_id int) {
+    s := t.cols[col_id].Call("getAttribute", "stype").String()
+    typ := sort_type[strings.ToLower(s)]
+
     ord := 1
     if t.cols[col_id].Get("classList").Call("contains", "headerUp").Bool() {
         ord = -1
     }
-    sort.Slice(t.rows, less(t.rows, col_id, 0, ord))
+
+    sort.Slice(t.rows, less(t.rows, col_id, typ, ord))
     log.Debugf("do_sort table %s, column %d", t.id, col_id)
+
     for _, row := range t.rows {
         for _, td := range row.tds {
             s := td.Get("innerText").String()
@@ -167,7 +210,9 @@ func (t *Table)do_sort(col_id int) {
 }
 
 
-func (t *Table)get_head() {
+// return init sort column
+func (t *Table)get_head() (isc int) {
+    isc = -1
     thd := t.elm.Call("getElementsByTagName", "thead")
     if thd.Length() < 1 {
         log.Errorf("Can not find thead of table %s", t.id)
@@ -176,10 +221,22 @@ func (t *Table)get_head() {
     ths := thd.Index(0).Call("getElementsByTagName", "th")
     log.Debugf("found %d th(s) in table %s", ths.Length(), t.id)
     for i := 0; i < ths.Length(); i++ {
+        col := ths.Index(i)
+        cls := col.Get("classList")
+        typ := col.Call("getAttribute", "stype")
+        up := cls.Call("contains", "headerUp").Bool()
+        dn := cls.Call("contains", "headerDn").Bool()
+        if (typ.Type() == js.TypeNull) && !up && !dn &&
+           !cls.Call("contains", "header").Bool() {
+            continue
+        }
+        cls.Call("add", "header")
         cb := js.NewCallback(t.click_col(i))
         ths.Index(i).Call("addEventListener", "click", cb)
-        t.cols = append(t.cols, ths.Index(i))
+        t.cols = append(t.cols, col)
+        if up || dn { isc = i }
     }
+    return
 }
 
 
