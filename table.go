@@ -8,24 +8,16 @@ import (
     "fgdwcfgo/log"
 )
 
-func insertFirst(elm, chd js.Value) {
-    /*
-    fc := elm.Get("firstChild")
-    if fc.Type == js.Null {
-    } else {
-        elm.Call("")
-    }
-    */
-}
 
 func initSortTable() {
     doc := js.Global().Get("document")
+    /*
     ss := doc.Get("styleSheets")
     log.Debugf("ss.Length = %v", ss.Length())
     for i := 0; i < ss.Length(); i++ {
         log.Debugf("title %v = %v", i, ss.Index(i).Get("title"))
     }
-
+    */
     st := doc.Call("createElement", "style")
     st.Set("innerHTML",
            `table.sorted th {

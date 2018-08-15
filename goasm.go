@@ -20,9 +20,13 @@ func main() {
 //    js.Global().Set("Sorted", "abcdefg")
 */
     initSortTable()
-
     st := func(i []js.Value) { SortTable(i[0].String()) }
     js.Global().Set("SortTable", js.NewCallback(st))
+
+    initPickDate()
+    pd := func(i []js.Value) { PickDate(i[0].String()) }
+    js.Global().Set("PickDate", js.NewCallback(pd))
+
     select {}
     fmt.Printf("bye goasm\n")
 }
@@ -31,4 +35,10 @@ func main() {
 func SortTable(id string) {
     t := NewTable(id)
     t.Init()
+}
+
+
+func PickDate(id string) {
+    d := NewDate(id)
+    d.Init()
 }
