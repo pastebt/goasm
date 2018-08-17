@@ -83,6 +83,17 @@ func initPickDate() {
                 border: 0;
                 padding: 0;
             }
+
+p {
+    margin: 30px;
+    background:yellow;
+    #border: 3px solid black;
+    border: 3px solid #fff;
+    outline: 1px solid red;
+    outline-offset: 15px;
+    border-radius: 5em;
+    box-shadow: 0 0 0 2px  blue;
+}
             `)
     //hd := doc.Get("head")
     //if hd.Type() == js.TypeNull {
