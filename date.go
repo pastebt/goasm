@@ -82,18 +82,37 @@ func initPickDate() {
             div.datepicker table.head td {
                 border: 0;
                 padding: 0;
+                background: none;
+                text-align: center;
             }
-
-p {
-    margin: 30px;
-    background:yellow;
-    #border: 3px solid black;
-    border: 3px solid #fff;
-    outline: 1px solid red;
-    outline-offset: 15px;
-    border-radius: 5em;
-    box-shadow: 0 0 0 2px  blue;
-}
+            div.datepicker table.head td.arrow:hover {
+                border: 1px solid #aed0ea;
+                border-radius: 5px;
+            }
+            div.datepicker table.head td.arrow {
+                border: 1px solid transparent;
+            }
+            circle {
+                width: 16px;
+                height: 16px;
+                background: #d7ebf9;
+                border-radius: 50%;
+                display: inline-block;
+            }
+            arrow.left {
+                border-top: 6px solid transparent;
+                border-right: 8px solid black;
+                border-bottom: 6px solid transparent;
+                display: inline-block;
+                margin: 2px 5px 0 0;
+            }
+            arrow.right {
+                border-top: 6px solid transparent;
+                border-left: 8px solid black;
+                border-bottom: 6px solid transparent;
+                display: inline-block;
+                margin: 2px 0 0 5px;
+            }
             `)
     //hd := doc.Get("head")
     //if hd.Type() == js.TypeNull {
@@ -108,7 +127,7 @@ p {
     DpDiv.Get("classList").Call("add", "datepicker")
     DpDiv.Set("innerHTML", `
         <table class="head"><tr>
-            <td>lf</td>
+            <td class="arrow"><circle><arrow class="left" title="prev" ></arrow></circle></td>
             <td><select>
                 <option value=1>Jan</option>
                 <option value=2>Feb</option>
@@ -128,7 +147,7 @@ p {
                 <option value=2018>2018</option>
                 <option value=2019>2019</option>
             </select></td>
-            <td>rt</td>
+            <td class="arrow"><circle><arrow class="right" title="next"></arrow></circle></td>
         </tr></table>
         <table class="week">
             <thead><tr>
