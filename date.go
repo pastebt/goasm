@@ -15,14 +15,19 @@ type DatePicker struct {
     btn  js.Value       // generated button
 }
 
-var (
-    DpDiv   js.Value    // date elem div
-    Month   js.Value    // date elem div month select
-    Syear   js.Value    // date elem div year select
-    Sdays   js.Value    // date elem div day select
-    DayCB   js.Callback
-    DpAct   *DatePicker // active DatePicker
-)
+
+type DateDiv struct {
+    div    js.Value     // date elem div
+    mon    js.Value     // date elem div month select
+    year   js.Value     // date elem div year select
+    days   js.Value     // date elem div day select
+    dcb    js.Callback  // call back for days select
+    act    *DatePicker  // active DatePicker
+    fmt    string       // date format
+}
+
+
+var DD = DateDiv{fmt: "2006-01-02"}
 
 
 func initPickDate() {
@@ -143,10 +148,10 @@ func initPickDate() {
                 <option value=2018>2018</option>
                 <option value=2019>2019</option>
 */
-    DpDiv = doc.Call("createElement", "div")
-    DpDiv.Get("classList").Call("add", "datepicker")
+    DD.div = doc.Call("createElement", "div")
+    DD.div.Get("classList").Call("add", "datepicker")
     td := `<td onclick="PickDateClickDay(this);"></td>`
-    DpDiv.Set("innerHTML", `
+    DD.div.Set("innerHTML", `
         <table class="head"><tr>
             <td class="arrow"><circle><arrow class="left" title="prev" ></arrow></circle></td>
             <td><select id="date_picker_sel_month">
@@ -185,10 +190,10 @@ func initPickDate() {
         log.Errorf("Can not find <body> in html ")
         return
     }
-    bd.Index(0).Call("appendChild", DpDiv)
-    Month = doc.Call("getElementById", "date_picker_sel_month")
-    Syear = doc.Call("getElementById", "date_picker_sele_year")
-    Sdays = doc.Call("getElementById", "date_picker_sele_days")
+    bd.Index(0).Call("appendChild", DD.div)
+    DD.mon = doc.Call("getElementById", "date_picker_sel_month")
+    DD.year = doc.Call("getElementById", "date_picker_sele_year")
+    DD.days = doc.Call("getElementById", "date_picker_sele_days")
     update_table(time.Now())
 }
 
@@ -204,9 +209,9 @@ func (d *DatePicker)Init() {
     //    log.Debugf("release PickDateClickDay")
     //    
     //}
-    DayCB.Release()
-    DayCB = js.NewCallback(d.click_day)
-    js.Global().Set("PickDateClickDay", DayCB)
+    DD.dcb.Release()
+    DD.dcb = js.NewCallback(d.click_day)
+    js.Global().Set("PickDateClickDay", DD.dcb)
 
     doc := js.Global().Get("document")
     d.elm = doc.Call("getElementById", d.id)
@@ -230,20 +235,21 @@ func (d *DatePicker)Init() {
 
 // update picker div,
 func (d *DatePicker)input_keypress(vs []js.Value) {
-    DpAct = d
+    DD.act = d
     log.Debugf("keypress DpAct=%v, vs=%v", d, vs)
 }
 
 // hide date picker div
 // update date
 func (d *DatePicker)input_change(vs []js.Value) {
-    DpAct = d
+    DD.act = d
     log.Debugf("change DpAct=%v, vs=%v", d, vs)
 }
 
+
 func (d *DatePicker)click_btn(vs []js.Value) {
-    st := DpDiv.Get("style")
-    if DpAct == d {
+    st := DD.div.Get("style")
+    if DD.act == d {
         // switch display block/none
         if st.Get("display").String() == "block" {
             st.Set("display", "none")
@@ -251,7 +257,7 @@ func (d *DatePicker)click_btn(vs []js.Value) {
             st.Set("display", "block")
         }
     } else {
-        DpAct = d
+        DD.act = d
         // keep display block
         st.Set("display", "block")
     }
@@ -275,7 +281,7 @@ func update_table(n time.Time) {
     //log.Debugf("dt = %v", dt)
     dt = dt.AddDate(0, 0, -int(dt.Weekday()))   // Sunday
     //log.Debugf("dt = %v", dt)
-    trs := Sdays.Call("getElementsByTagName", "tr")
+    trs := DD.days.Call("getElementsByTagName", "tr")
     for r := 0; r < 5; r++ {
         tds := trs.Index(r).Call("getElementsByTagName", "td")
         for c := 0; c < 7; c++ {
@@ -302,7 +308,7 @@ func update_table(n time.Time) {
         ms += fmt.Sprintf("<option value=%d%s>%s</option>\n",
                           m, s, m.String()[:3])
     }
-    Month.Set("innerHTML", ms)
+    DD.mon.Set("innerHTML", ms)
 
     ms = ""
     ty := n.Year()
@@ -311,5 +317,5 @@ func update_table(n time.Time) {
         if y == ty { s = ` selected="selected"` }
         ms += fmt.Sprintf("<option value=%d%s>%d</option>\n", y, s, y)
     }
-    Syear.Set("innerHTML", ms)
+    DD.year.Set("innerHTML", ms)
 }
