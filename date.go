@@ -20,7 +20,7 @@ var (
     Month   js.Value    // date elem div month select
     Syear   js.Value    // date elem div year select
     Sdays   js.Value    // date elem div day select
-
+    DayCB   js.Callback
     DpAct   *DatePicker // active DatePicker
 )
 
@@ -145,6 +145,7 @@ func initPickDate() {
 */
     DpDiv = doc.Call("createElement", "div")
     DpDiv.Get("classList").Call("add", "datepicker")
+    td := `<td onclick="PickDateClickDay(this);"></td>`
     DpDiv.Set("innerHTML", `
         <table class="head"><tr>
             <td class="arrow"><circle><arrow class="left" title="prev" ></arrow></circle></td>
@@ -159,11 +160,11 @@ func initPickDate() {
                 <th>Su</th><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th>
             </tr></thead>
             <tbody id="date_picker_sele_days">
-            <tr><td>1</td><td>6</td><td>8</td><td>0</td><td>1</td><td>2</td><td>2</td></tr>
-            <tr><td>2</td><td>3</td><td>5</td><td>8</td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>2</td><td>4</td><td>6</td><td>8</td><td>9</td><td>1</td><td>2</td></tr>
-            <tr><td>2</td><td>4</td><td>5</td><td>8</td><td>0</td><td>1</td><td>2</td></tr>
-            <tr><td>2</td><td>4</td><td>6</td><td>7</td><td>9</td><td>1</td><td>3</td></tr>
+            <tr>` + td + td + td + td + td + td + td + `</tr>
+            <tr>` + td + td + td + td + td + td + td + `</tr>
+            <tr>` + td + td + td + td + td + td + td + `</tr>
+            <tr>` + td + td + td + td + td + td + td + `</tr>
+            <tr>` + td + td + td + td + td + td + td + `</tr>
             </tbody>
         </table>
            `)
@@ -198,14 +199,25 @@ func NewDate(id string) *DatePicker{
 
 
 func (d *DatePicker)Init() {
+    //cb := js.Global().Get("PickDateClickDay")
+    //if cb.Type() == js.TypeFunction {
+    //    log.Debugf("release PickDateClickDay")
+    //    
+    //}
+    DayCB.Release()
+    DayCB = js.NewCallback(d.click_day)
+    js.Global().Set("PickDateClickDay", DayCB)
+
     doc := js.Global().Get("document")
     d.elm = doc.Call("getElementById", d.id)
     if d.elm.Type() == js.TypeNull {
         log.Errorf("Can not find input with id=%s", d.id)
         return
     }
-    d.elm.Call("addEventListener", "keypress", js.NewCallback(d.keypress))
-    d.elm.Call("addEventListener", "change", js.NewCallback(d.change))
+    d.elm.Call("addEventListener", "keypress",
+               js.NewCallback(d.input_keypress))
+    d.elm.Call("addEventListener", "change",
+               js.NewCallback(d.input_change))
     //d.add_btn()
     d.btn = doc.Call("createElement", "button")
     d.btn.Set("innerText", "...")
@@ -217,14 +229,14 @@ func (d *DatePicker)Init() {
 
 
 // update picker div,
-func (d *DatePicker)keypress(vs []js.Value) {
+func (d *DatePicker)input_keypress(vs []js.Value) {
     DpAct = d
     log.Debugf("keypress DpAct=%v, vs=%v", d, vs)
 }
 
 // hide date picker div
 // update date
-func (d *DatePicker)change(vs []js.Value) {
+func (d *DatePicker)input_change(vs []js.Value) {
     DpAct = d
     log.Debugf("change DpAct=%v, vs=%v", d, vs)
 }
@@ -251,6 +263,12 @@ func (d *DatePicker)click_btn(vs []js.Value) {
 }
 
 
+func (d *DatePicker)click_day(vs []js.Value) {
+    log.Debugf("click_day, vs=%v, text=%s", vs,
+               vs[0].Get("innerText").String())
+}
+
+
 func update_table(n time.Time) {
     //log.Debugf("n = %v", n)
     dt := n.AddDate(0, 0, 1 - n.Day())   // 1st day of month
@@ -270,7 +288,10 @@ func update_table(n time.Time) {
             }
             //h := fmt.Sprintf(`<a href="#">%d</a>`, dt.Day())
             h := fmt.Sprintf(`%d`, dt.Day())
-            tds.Index(c).Set("innerHTML", h)
+            td := tds.Index(c)
+            td.Set("innerHTML", h)
+            td.Call("setAttribute", "m", fmt.Sprintf("%d", dt.Month()))
+            //td.Call("setAttribute", "onclick", "PickDateClickDay(this);")
             dt = dt.AddDate(0, 0, 1)
         }
     }
