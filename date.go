@@ -18,7 +18,7 @@ type DatePicker struct {
 
 type DateDiv struct {
     div     js.Value    // date elem div
-    now     time.Time   // div current time
+    sel     time.Time   // div current time
     mon     js.Value    // date elem div month select
     year    js.Value    // date elem div year select
     days    js.Value    // date elem div day select
@@ -76,6 +76,14 @@ func initPickDate() {
             div.datepicker table td.other {
                 opacity: .7;
                 font-weight: normal;
+            }
+            div.datepicker table td.sel {
+                border: 1px solid #2694e8;
+                background: #3baae3;
+            }
+            div.datepicker table td.now {
+                border: 1px solid #f9dd34;
+                background: #ffef8f;
             }
             div.datepicker table.weekend {
 
@@ -199,7 +207,7 @@ func initPickDate() {
     DD.mon = doc.Call("getElementById", "date_picker_sel_month")
     DD.year = doc.Call("getElementById", "date_picker_sele_year")
     DD.days = doc.Call("getElementById", "date_picker_sele_days")
-    DD.now = time.Now()
+    DD.sel = time.Now()
     update_table()
 }
 
@@ -287,34 +295,55 @@ func (d *DatePicker)mon_year_chg(vs []js.Value) {
     var y, m int
     if t, e := time.Parse("1", v); e == nil {
         // month change
-        m = int(t.Month() - DD.now.Month())
+        m = int(t.Month() - DD.sel.Month())
     } else if t, e := time.Parse("2006", v); e == nil{
-        y = t.Year() - DD.now.Year()
+        y = t.Year() - DD.sel.Year()
     }
     if y != 0 || m != 0 {
-        DD.now = DD.now.AddDate(y, m, 0)
+        DD.sel = DD.sel.AddDate(y, m, 0)
         update_table()
+        d.elm.Set("value", DD.sel.Format(DD.fmt))
     }
 }
 
 
 func (d *DatePicker)click_day(vs []js.Value) {
-    log.Debugf("click_day, vs=%v, text=%s", vs,
-               vs[0].Get("innerText").String())
+    v := vs[0].Get("innerText").String()
+    log.Debugf("click_day, vs=%v, text=%s", vs, v)
+    t, e := time.Parse("2", v)
+    if e != nil {
+        log.Errorf("time.Parse %v err=%v", v, e)
+        return
+    }
+    v = vs[0].Call("getAttribute", "m").String()
+    m, e := time.Parse("1", v)
+    if e != nil {
+        log.Errorf("time.Parse %v err=%v", v, e)
+        return
+    }
+    dt := t.Day() - DD.sel.Day()
+    mt := int(m.Month() - DD.sel.Month())
+    if dt != 0 || mt != 0{
+        DD.sel = DD.sel.AddDate(0, mt, dt)
+        update_table()
+        d.elm.Set("value", DD.sel.Format(DD.fmt))
+    }
 }
 
 
 func (d *DatePicker)click_lr(vs []js.Value) {
     log.Debugf("click_day, vs=%v", vs)
     m := vs[0].Int()
-    DD.now = DD.now.AddDate(0, m, 0)
+    DD.sel = DD.sel.AddDate(0, m, 0)
     update_table()
+    d.elm.Set("value", DD.sel.Format(DD.fmt))
 }
 
 
 func update_table() {
     //log.Debugf("n = %v", n)
-    n := DD.now
+    now := time.Now().Format(DD.fmt)
+    n := DD.sel
     dt := n.AddDate(0, 0, 1 - n.Day())   // 1st day of month
     //log.Debugf("dt = %v", dt)
     dt = dt.AddDate(0, 0, -int(dt.Weekday()))   // Sunday
@@ -326,8 +355,20 @@ func update_table() {
             cs := tds.Index(c).Get("classList")
             if dt.Month() == n.Month() {
                 cs.Call("remove", "other")
+                if dt.Day() == n.Day() {
+                   cs.Call("add", "sel")
+                } else {
+                    cs.Call("remove", "sel")
+                }
             } else {
                 cs.Call("add", "other")
+                cs.Call("remove", "sel")
+            }
+            if dt.Format(DD.fmt) == now {
+                cs.Call("remove", "sel")
+                cs.Call("add", "now")
+            } else {
+                cs.Call("remove", "now")
             }
             //h := fmt.Sprintf(`<a href="#">%d</a>`, dt.Day())
             h := fmt.Sprintf(`%d`, dt.Day())
