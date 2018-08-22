@@ -22,7 +22,8 @@ type DateDiv struct {
     mon     js.Value    // date elem div month select
     year    js.Value    // date elem div year select
     days    js.Value    // date elem div day select
-    ccb     js.Callback // call back for month/year change
+    mcb     js.Callback // call back for month change
+    scb     js.Callback // call back for month/year select change
     dcb     js.Callback // call back for days select
     act     *DatePicker // active DatePicker
     fmt     string      // date format
@@ -155,12 +156,14 @@ func initPickDate() {
     td := `<td onclick="PickDateClickDay(this);"></td>`
     DD.div.Set("innerHTML", `
         <table class="head"><tr>
-            <td class="arrow"><circle><arrow class="left" title="prev" ></arrow></circle></td>
-            <td><select id="date_picker_sel_month" onchange="PickDateChange(this);">
+            <td class="arrow" onclick="PickDateClickLR(-1);">
+                <circle><arrow class="left" title="prev" ></arrow></circle></td>
+            <td><select id="date_picker_sel_month" onchange="PickDateSelChange(this);">
             </select></td>
-            <td><select id="date_picker_sele_year" onchange="PickDateChange(this);">
+            <td><select id="date_picker_sele_year" onchange="PickDateSelChange(this);">
             </select></td>
-            <td class="arrow"><circle><arrow class="right" title="next"></arrow></circle></td>
+            <td class="arrow" onclick="PickDateClickLR(1);">
+                <circle><arrow class="right" title="next"></arrow></circle></td>
         </tr></table>
         <table class="week">
             <thead><tr>
@@ -212,12 +215,15 @@ func (d *DatePicker)Init() {
     //    log.Debugf("release PickDateClickDay")
     //    
     //}
-    DD.ccb.Release()
+    DD.scb.Release()
     DD.dcb.Release()
-    DD.ccb = js.NewCallback(d.mon_year_chg)
+    DD.mcb.Release()
+    DD.scb = js.NewCallback(d.mon_year_chg)
     DD.dcb = js.NewCallback(d.click_day)
-    js.Global().Set("PickDateChange", DD.ccb)
+    DD.mcb = js.NewCallback(d.click_lr)
+    js.Global().Set("PickDateSelChange", DD.scb)
     js.Global().Set("PickDateClickDay", DD.dcb)
+    js.Global().Set("PickDateClickLR", DD.mcb)
 
     doc := js.Global().Get("document")
     d.elm = doc.Call("getElementById", d.id)
@@ -276,14 +282,33 @@ func (d *DatePicker)click_btn(vs []js.Value) {
 
 
 func (d *DatePicker)mon_year_chg(vs []js.Value) {
-    log.Debugf("mon_year_chg, vs=%v, text=%s", vs,
-               vs[0].Get("value").String())
+    v := vs[0].Get("value").String()
+    log.Debugf("mon_year_chg, vs=%v, text=%s", vs, v)
+    var y, m int
+    if t, e := time.Parse("1", v); e == nil {
+        // month change
+        m = int(t.Month() - DD.now.Month())
+    } else if t, e := time.Parse("2006", v); e == nil{
+        y = t.Year() - DD.now.Year()
+    }
+    if y != 0 || m != 0 {
+        DD.now = DD.now.AddDate(y, m, 0)
+        update_table()
+    }
 }
 
 
 func (d *DatePicker)click_day(vs []js.Value) {
     log.Debugf("click_day, vs=%v, text=%s", vs,
                vs[0].Get("innerText").String())
+}
+
+
+func (d *DatePicker)click_lr(vs []js.Value) {
+    log.Debugf("click_day, vs=%v", vs)
+    m := vs[0].Int()
+    DD.now = DD.now.AddDate(0, m, 0)
+    update_table()
 }
 
 
