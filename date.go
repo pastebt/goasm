@@ -27,10 +27,12 @@ type DateDiv struct {
     dcb     js.Callback // call back for days select
     act     *DatePicker // active DatePicker
     fmt     string      // date format
+    pmt     string      // parse date format
 }
 
 
-var DD = DateDiv{fmt: "2006-01-02"}
+var DD = DateDiv{fmt: "2006-01-02", pmt: "2006-1-2"}
+//var DD = DateDiv{fmt: "2006-1-2"}
 
 
 func initPickDate() {
@@ -254,16 +256,32 @@ func (d *DatePicker)Init() {
 
 
 // update picker div,
-func (d *DatePicker)input_keypress(vs []js.Value) {
+func (d *DatePicker)input_proc(quit bool) {
     DD.act = d
-    log.Debugf("keypress DpAct=%v, vs=%v", d, vs)
+    v := d.elm.Get("value").String()
+    dt, err := time.Parse(DD.fmt, v)
+    log.Debugf("keypress DpAct=%v, v=%v, dt=%v, err=%v", d, v, dt, err)
+    if err != nil { dt, err = time.Parse(DD.pmt, v) }
+    if err == nil {
+        DD.sel = dt
+        update_table()
+    }
+    if quit {
+        // TODO hide DD
+    }
+}
+
+
+func (d *DatePicker)input_keypress(vs []js.Value) {
+    log.Debugf("keypress vs=%v", vs)
+    d.input_proc(false)
 }
 
 // hide date picker div
 // update date
 func (d *DatePicker)input_change(vs []js.Value) {
-    DD.act = d
-    log.Debugf("change DpAct=%v, vs=%v", d, vs)
+    log.Debugf("change vs=%v", d, vs)
+    d.input_proc(true)
 }
 
 
