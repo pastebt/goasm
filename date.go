@@ -46,7 +46,8 @@ func initPickDate() {
                 top: 83.8px;
                 left: 219.838px;
                 z-index: 1;
-                display: block;
+                #display: block;
+                display: none;
                 width: auto;
                 font-size: 9px;
                 padding: .2em;
@@ -267,14 +268,17 @@ func (d *DatePicker)input_proc(quit bool) {
         update_table()
     }
     if quit {
+        log.Debugf(`DD.div.Get("style").Set("display", "none")`)
         // TODO hide DD
+        DD.div.Get("style").Set("display", "none")
     }
 }
 
 
 func (d *DatePicker)input_keypress(vs []js.Value) {
-    log.Debugf("keypress vs=%v", vs)
-    d.input_proc(false)
+    k := vs[0].Get("which").Int()   // not support < IE8
+    log.Debugf("keypress vs=%v, k=%v", vs, k)
+    d.input_proc(k == 13)
 }
 
 // hide date picker div
