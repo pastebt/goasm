@@ -221,11 +221,6 @@ func NewDate(id string) *DatePicker{
 
 
 func (d *DatePicker)Init() {
-    //cb := js.Global().Get("PickDateClickDay")
-    //if cb.Type() == js.TypeFunction {
-    //    log.Debugf("release PickDateClickDay")
-    //    
-    //}
     DD.scb.Release()
     DD.dcb.Release()
     DD.mcb.Release()
@@ -244,13 +239,9 @@ func (d *DatePicker)Init() {
     }
     d.elm.Call("addEventListener", "keypress",
                js.NewCallback(d.input_keypress))
-    d.elm.Call("addEventListener", "change",
-               js.NewCallback(d.input_change))
-    //d.add_btn()
     d.btn = doc.Call("createElement", "button")
     d.btn.Set("innerText", "...")
     d.btn.Call("addEventListener", "click", js.NewCallback(d.click_btn))
-    //inserAfter(d.elm, d.btn)
     d.elm.Get("parentNode").Call("insertBefore",
                                  d.btn, d.elm.Get("nextSibling"))
 }
@@ -261,7 +252,7 @@ func (d *DatePicker)input_proc(quit bool) {
     DD.act = d
     v := d.elm.Get("value").String()
     dt, err := time.Parse(DD.fmt, v)
-    log.Debugf("keypress DpAct=%v, v=%v, dt=%v, err=%v", d, v, dt, err)
+    log.Debugf("input_proc DpAct=%v, v=%v, dt=%v, err=%v", d, v, dt, err)
     if err != nil { dt, err = time.Parse(DD.pmt, v) }
     if err == nil {
         DD.sel = dt
@@ -279,13 +270,6 @@ func (d *DatePicker)input_keypress(vs []js.Value) {
     k := vs[0].Get("which").Int()   // not support < IE8
     log.Debugf("keypress vs=%v, k=%v", vs, k)
     d.input_proc(k == 13)
-}
-
-// hide date picker div
-// update date
-func (d *DatePicker)input_change(vs []js.Value) {
-    log.Debugf("change vs=%v", d, vs)
-    d.input_proc(true)
 }
 
 
@@ -348,11 +332,12 @@ func (d *DatePicker)click_day(vs []js.Value) {
     if dt != 0 || mt != 0{
         DD.sel = DD.sel.AddDate(0, mt, dt)
         update_table()
-        d.elm.Set("value", DD.sel.Format(DD.fmt))
     }
+    d.elm.Set("value", DD.sel.Format(DD.fmt))
+    DD.div.Get("style").Set("display", "none")
 }
 
-
+// click left-right arrow
 func (d *DatePicker)click_lr(vs []js.Value) {
     log.Debugf("click_day, vs=%v", vs)
     m := vs[0].Int()
