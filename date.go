@@ -210,9 +210,13 @@ func (d *DatePicker)Init() {
         return
     }
     c := js.NewCallback(d.click_btn)
+    //d.elm.Call("addEventListener", "click", c)
+    //d.elm.Call("addEventListener", "focus",
+    //           js.NewCallback(d.input_change))
+    d.elm.Call("addEventListener", "focusout",
+               js.NewCallback(d.input_focusout))
     d.elm.Call("addEventListener", "keypress",
                js.NewCallback(d.input_keypress))
-    //d.elm.Call("addEventListener", "click", c)
     d.btn = doc.Call("createElement", "button")
     d.btn.Set("innerText", "...")
     //d.btn.Call("addEventListener", "click", js.NewCallback(d.click_btn))
@@ -248,6 +252,12 @@ func (d *DatePicker)input_keypress(vs []js.Value) {
 }
 
 
+func (d *DatePicker)input_focusout(vs []js.Value) {
+    k := vs[0].Get("which")
+    log.Debugf("change vs=%v, k=%v", vs, k)
+    DD.div.Get("style").Set("display", "none")
+}
+
 func (d *DatePicker)click_btn(vs []js.Value) {
     st := DD.div.Get("style")
     if DD.act == d {
@@ -267,6 +277,7 @@ func (d *DatePicker)click_btn(vs []js.Value) {
     st.Set("top", top)
     st.Set("left", lft)
     log.Debugf("click_btn DpAct=%v, vs=%v, top=%v, left=%v", d, vs, top, lft)
+    d.elm.Call("focus")
 }
 
 
