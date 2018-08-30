@@ -144,24 +144,6 @@ func initPickDate() {
         return
     }
     hd.Index(0).Call("insertBefore", st, hd.Index(0).Get("firstChild"))
-/*
-                <option value=1>Jan</option>
-                <option value=2>Feb</option>
-                <option value=3>Mar</option>
-                <option value=4>Apr</option>
-                <option value=5>May</option>
-                <option value=6>Jun</option>
-                <option value=7>Jul</option>
-                <option value=8>Aug</option>
-                <option value=9>Sep</option>
-                <option value=10>Oct</option>
-                <option value=11>Nov</option>
-                <option value=12>Dec</option>
-
-                <option value=2017>2017</option>
-                <option value=2018>2018</option>
-                <option value=2019>2019</option>
-*/
     DD.div = doc.Call("createElement", "div")
     DD.div.Get("classList").Call("add", "datepicker")
     td := `<td onclick="PickDateClickDay(this);"></td>`
@@ -189,16 +171,6 @@ func initPickDate() {
             </tbody>
         </table>
            `)
-    /*
-    tbs := DpDiv.Call("getElementsByTagName", "tbody")
-    for i := 0; i < tbs.Length(); i++ {
-        trs := tbs.Index(i).Call("getElementsByTagName", "tr")
-        if trs.Length() == 5 {
-            Tbody = tbs.Index(i)
-            break
-        }
-    }
-    */
     //bd := doc.Get("body") // dom3 not support yet
     //if bd.Type() == js.TypeNull {
     bd := doc.Call("getElementsByTagName", "body")
@@ -237,11 +209,14 @@ func (d *DatePicker)Init() {
         log.Errorf("Can not find input with id=%s", d.id)
         return
     }
+    c := js.NewCallback(d.click_btn)
     d.elm.Call("addEventListener", "keypress",
                js.NewCallback(d.input_keypress))
+    //d.elm.Call("addEventListener", "click", c)
     d.btn = doc.Call("createElement", "button")
     d.btn.Set("innerText", "...")
-    d.btn.Call("addEventListener", "click", js.NewCallback(d.click_btn))
+    //d.btn.Call("addEventListener", "click", js.NewCallback(d.click_btn))
+    d.btn.Call("addEventListener", "click", c)
     d.elm.Get("parentNode").Call("insertBefore",
                                  d.btn, d.elm.Get("nextSibling"))
 }
@@ -260,7 +235,7 @@ func (d *DatePicker)input_proc(quit bool) {
     }
     if quit {
         log.Debugf(`DD.div.Get("style").Set("display", "none")`)
-        // TODO hide DD
+        // hide DD
         DD.div.Get("style").Set("display", "none")
     }
 }
