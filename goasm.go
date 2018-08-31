@@ -27,6 +27,10 @@ func main() {
     pd := func(i []js.Value) { PickDate(i[0].String()) }
     js.Global().Set("PickDate", js.NewCallback(pd))
 
+    initChart()
+    js.Global().Set("DrawChart", js.NewCallback(
+        func(i []js.Value) { DrawChart(i[0].String()) }))
+
     select {}
     fmt.Printf("bye goasm\n")
 }
@@ -41,4 +45,10 @@ func SortTable(id string) {
 func PickDate(id string) {
     d := NewDate(id)
     d.Init()
+}
+
+
+func DrawChart(id string) {
+    c := NewChart(id)
+    c.Init()
 }
