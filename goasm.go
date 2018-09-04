@@ -37,18 +37,15 @@ func main() {
 
 
 func SortTable(id string) {
-    t := NewTable(id)
-    t.Init()
+    NewTable(id).Init()
 }
 
 
 func PickDate(id string) {
-    d := NewDate(id)
-    d.Init()
+    NewDate(id).Init()
 }
 
 
 func DrawChart(id string) {
-    c := NewChart(id)
-    c.Init()
+    NewChart(id).Init()
 }
