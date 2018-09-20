@@ -26,12 +26,22 @@ func (c *Chart)Init() {
     title := `
 <text x="400" y="20" fill="#3E576F" style="color:#3E576F;font-size:16px;font-family:'Lucida Grande', 'Lucida Sans Unicode', Verdana, Arial, Helvetica, sans-serif;" text-anchor="middle" transform="rotate(0 400 20)" class="highcharts-title"><tspan x="400">Daily UR report</tspan></text>
 `
+
+    prn := `
+<rect x="0.5" y="0.5" width="23" height="19" rx="3" ry="3" fill="url(http://172.16.90.60:8080/#highcharts-3)" transform="translate(740,10)" stroke-width="1" zIndex="19" stroke="#B0B0B0"></rect>
+<path d="M 745.5 23.5 L 757.5 23.5 757.5 18.5 745.5 18.5 Z M 748.5 18.5 L 748.5 14.5 754.5 14.5 754.5 18.5 Z M 748.5 23.5 L 747 26.5 756 26.5 754.5 23.5 Z" fill="#B5C9DF" stroke="#A0A0A0" stroke-width="1" zIndex="20"></path>
+<rect x="740" y="10" width="24" height="20" fill="rgb(255,255,255)" fill-opacity="0.001" title="Print the chart" zIndex="21" style="cursor:pointer;"></rect>
+`
     dwn := `
 <rect x="0.5" y="0.5" width="23" height="19" rx="3" ry="3" fill="url(http://172.16.90.45:8000/unrated#highcharts-2)" transform="translate(766,10)" stroke-width="1" zIndex="19" stroke="#B0B0B0"></rect>
 <path d="M 771.5 26.5 L 783.5 26.5 783.5 23.5 771.5 23.5 Z M 777.5 23.5 L 774.5 18.5 776.5 18.5 776.5 14.5 778.5 14.5 778.5 18.5 780.5 18.5 Z" fill="#A8BF77" stroke="#A0A0A0" stroke-width="1" zIndex="20"></path>
 <rect x="766" y="10" width="24" height="20" fill="rgb(255,255,255)" fill-opacity="0.001" title="Export to raster or vector image" zIndex="21" style="cursor:pointer;"></rect>
 `
-    c.svg.Set("innerHTML", title + dwn)
+    path := `
+<path d="M 6.5 259.8 L 225.5 259.8 44.4 259.7 663.4 259.6" fill="#A8BF77" isTracker="true" stroke-opacity="0.05" stroke="rgb(92,192,192)" stroke-width="22" stroke-linecap="round" visibility="visible" zIndex="1" style=""></path>
+`
+
+    c.svg.Set("innerHTML", title + prn + dwn + path)
 /*
     inner := `
 <defs>
