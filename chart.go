@@ -38,7 +38,11 @@ func (c *Chart)Init() {
 <rect x="766" y="10" width="24" height="20" fill="rgb(255,255,255)" fill-opacity="0.001" title="Export to raster or vector image" zIndex="21" style="cursor:pointer;"></rect>
 `
     path := `
-<path d="M 6.5 259.8 L 225.5 259.8 44.4 259.7 663.4 259.6" fill="#A8BF77" isTracker="true" stroke-opacity="0.05" stroke="rgb(92,192,192)" stroke-width="22" stroke-linecap="round" visibility="visible" zIndex="1" style=""></path>
+<path d="M 80 310.5 L 750 310.5" fill="none" stroke="#C0C0C0" stroke-width="1"></path>
+<path d="M 80 249.5 L 750 249.5" fill="none" stroke="#C0C0C0" stroke-width="1"></path>
+<path d="M 80 188.5 L 750 188.5" fill="none" stroke="#C0C0C0" stroke-width="1"></path>
+<path d="M 80 127.5 L 750 127.5" fill="none" stroke="#C0C0C0" stroke-width="1"></path>
+<path d="M 80 66.5 L 750 66.5" fill="none" stroke="#C0C0C0" stroke-width="1"></path>
 `
 
     c.svg.Set("innerHTML", title + prn + dwn + path)
