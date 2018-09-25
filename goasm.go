@@ -20,16 +20,18 @@ func main() {
 //    js.Global().Set("Sorted", "abcdefg")
 */
     initSortTable()
-    st := func(i []js.Value) { SortTable(i[0].String()) }
+    // this new goroutain is necessary, check:
+    // https://github.com/golang/go/issues/25902
+    st := func(i []js.Value) { go SortTable(i[0].String()) }
     js.Global().Set("SortTable", js.NewCallback(st))
 
     initPickDate()
-    pd := func(i []js.Value) { PickDate(i[0].String()) }
+    pd := func(i []js.Value) { go PickDate(i[0].String()) }
     js.Global().Set("PickDate", js.NewCallback(pd))
 
     initChart()
     js.Global().Set("DrawChart", js.NewCallback(
-        func(i []js.Value) { DrawChart(i[0].String()) }))
+        func(i []js.Value) { go DrawChart(i[0].String()) }))
 
     select {}
     fmt.Printf("bye goasm\n")

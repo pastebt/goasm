@@ -4,7 +4,10 @@ import (
     "sort"
     "strings"
     "strconv"
+    "net/http"
+    "io/ioutil"
     "syscall/js"
+
     "fgdwcfgo/log"
 )
 
@@ -82,7 +85,7 @@ type Row struct {
 type Table struct {
     id   string
     elm  js.Value       // table js element
-    body js.Value       // table body element, use to redraw table
+    body js.Value       // table body element, use to get data / re-draw table
     cols []js.Value     // table headers list
     rows []Row          // table body tr list
 
@@ -91,6 +94,7 @@ type Table struct {
 var sort_type = map[string]int{"string": 0,     // default, fixed to 0
                                "number": 1,
                                "currency": 2}
+
 
 func less_num(Is, Js string) bool {
     Ii, Ie := strconv.ParseFloat(Is, 64)
@@ -147,6 +151,19 @@ func (t *Table)Init() {
     log.Debugf("isc=%v", isc)
     t.get_body()
     if isc >= 0 { t.do_sort(isc) }
+}
+
+
+// visit url, get data, generate tbody innerHTML
+func (t *Table)fetch_data(url string) (string, error) {
+    log.Debugf("start fetch_data %v", url)
+    resp, err := http.Get(url)
+    log.Debugf("http.Get(%v) return %v, %v", url, resp, err)
+    if err != nil { return "", err }
+    defer resp.Body.Close()
+    dat, err := ioutil.ReadAll(resp.Body)
+    if err != nil { return "", err }
+    return string(dat), nil
 }
 
 
@@ -235,6 +252,15 @@ func (t *Table)get_body() {
         return
     }
     t.body = tbd.Index(0)
+    src := t.body.Call("getAttribute", "src").String()
+    // var x = document.URL;
+    lo := js.Global().Get("location")
+    if src[0] == '/' {
+        src = lo.Get("origin").String() + src
+    }
+    log.Infof("tbody src=%s, lo=%v", src, lo)
+    ih, err := t.fetch_data(src)
+    log.Infof("ih=%v, err=%v", ih, err)
     trs := t.body.Call("getElementsByTagName", "tr")
     for i := 0; i < trs.Length(); i++ {
         t.rows = append(t.rows, t.get_row(trs.Index(i)))
