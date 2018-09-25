@@ -1,12 +1,14 @@
 package main
 
 import (
+    "fmt"
     "sort"
     "strings"
     "strconv"
     "net/http"
     "io/ioutil"
     "syscall/js"
+    "encoding/json"
 
     "fgdwcfgo/log"
 )
@@ -87,6 +89,7 @@ type Table struct {
     elm  js.Value       // table js element
     body js.Value       // table body element, use to get data / re-draw table
     cols []js.Value     // table headers list
+    coln []string       // table column name, used to sel from json data
     rows []Row          // table body tr list
 
 }
@@ -133,6 +136,7 @@ func less(rows []Row, col, typ, ord int) func(i, j int) bool {
 func NewTable(id string) *Table {
     return &Table{id: id,
                   cols: make([]js.Value, 0, 5),
+                  coln: make([]string, 0, 5),
                   rows: make([]Row, 0, 10),
                   }
 }
@@ -163,7 +167,59 @@ func (t *Table)fetch_data(url string) (string, error) {
     defer resp.Body.Close()
     dat, err := ioutil.ReadAll(resp.Body)
     if err != nil { return "", err }
+    ct := resp.Header.Get("Content-Type")
+    if strings.Contains(ct, "/json") {
+        if s, err := t.json_to_html(dat); err == nil {
+            return s, nil
+        } else {
+            log.Errorf("json_to_html return err=%v", err)
+        }
+    }
+    // return is not json, use it as innerHTML
     return string(dat), nil
+}
+
+
+func (t *Table)json_to_html(bs []byte) (string, error) {
+    var dat interface{}
+    if err := json.Unmarshal(bs, &dat); err != nil { return "", err }
+    var L []interface{}
+    ok := false
+    // bs can be a simple [][]interface{}, which take is as [row][col]data
+    switch dat.(type) {
+    case []interface{}:
+        L, _ = dat.([]interface{})
+    case map[string]interface{}:
+        var l interface{}
+        m, _ := dat.(map[string]interface{})
+        l, ok = m["Rep"]
+        if !ok { l, ok = m["Report"] }
+        if ok {
+            L, ok = l.([]interface{})
+        }
+    }
+    if !ok { return "", fmt.Errorf("bs has bad struct") }
+    ret := ""
+    for _, R := range L {
+        ret += "<tr>"
+        if r, ok := R.([]interface{}); ok {
+            //case []interface{}:
+            for _, c := range r {
+                ret += fmt.Sprintf("<td>%s</td>", c)
+            }
+        }
+        if m, ok := R.(map[string]interface{}); ok {
+            for _, n := range t.coln {
+                if d, ok := m[n]; ok {
+                    ret += fmt.Sprintf("<td>%s</td>", d)
+                } else {
+                    log.Errorf("column %s not exits in json data", n)
+                }
+            }
+        }
+        ret += "</tr>\n"
+    }
+    return string(bs), nil
 }
 
 
@@ -227,6 +283,11 @@ func (t *Table)get_head() (isc int) {
     log.Debugf("found %d th(s) in table %s", ths.Length(), t.id)
     for i := 0; i < ths.Length(); i++ {
         col := ths.Index(i)
+        nm := col.Get("cname").String()
+        if nm == "" {
+            nm = strings.TrimSpace(col.Get("innerText").String())
+        }
+        t.coln = append(t.coln, nm)
         cls := col.Get("classList")
         typ := col.Call("getAttribute", "stype")
         up := cls.Call("contains", "headerUp").Bool()
@@ -261,6 +322,9 @@ func (t *Table)get_body() {
     log.Infof("tbody src=%s, lo=%v", src, lo)
     ih, err := t.fetch_data(src)
     log.Infof("ih=%v, err=%v", ih, err)
+    if err == nil {
+        t.body.Set("innerHTML", ih)
+    }
     trs := t.body.Call("getElementsByTagName", "tr")
     for i := 0; i < trs.Length(); i++ {
         t.rows = append(t.rows, t.get_row(trs.Index(i)))
