@@ -188,7 +188,7 @@ func (t *Table)json_to_html(bs []byte) (string, error) {
     // bs can be a simple [][]interface{}, which take is as [row][col]data
     switch dat.(type) {
     case []interface{}:
-        L, _ = dat.([]interface{})
+        L, ok = dat.([]interface{})
     case map[string]interface{}:
         var l interface{}
         m, _ := dat.(map[string]interface{})
@@ -205,21 +205,22 @@ func (t *Table)json_to_html(bs []byte) (string, error) {
         if r, ok := R.([]interface{}); ok {
             //case []interface{}:
             for _, c := range r {
-                ret += fmt.Sprintf("<td>%s</td>", c)
+                ret += fmt.Sprintf("<td>%v</td>", c)
             }
         }
         if m, ok := R.(map[string]interface{}); ok {
             for _, n := range t.coln {
                 if d, ok := m[n]; ok {
-                    ret += fmt.Sprintf("<td>%s</td>", d)
+                    ret += fmt.Sprintf("<td>%v</td>", d)
                 } else {
+                    ret += "<td></td>"
                     log.Errorf("column %s not exits in json data", n)
                 }
             }
         }
         ret += "</tr>\n"
     }
-    return string(bs), nil
+    return ret, nil
 }
 
 
